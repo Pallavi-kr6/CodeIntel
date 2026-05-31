@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { getPullRequests } from "@/lib/github";
+import { getPullRequests, type GithubPullRequest } from "@/lib/github";
 import { 
   ArrowLeft, 
   GitPullRequest, 
@@ -12,7 +12,9 @@ import {
   Calendar, 
   Sparkles,
   Loader2,
-  FolderDot
+  FolderDot,
+  BrainCircuit,
+  Network
 } from "lucide-react";
 
 export default function RepoPage() {
@@ -21,7 +23,7 @@ export default function RepoPage() {
   const owner = params.owner as string;
   const repoName = params.repo as string;
 
-  const [prs, setPrs] = useState<any[]>([]);
+  const [prs, setPrs] = useState<GithubPullRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,9 +41,9 @@ export default function RepoPage() {
         } else {
           setError("GitHub authentication session not found. Please log in again.");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error loading PRs:", err);
-        setError(err?.message || "Failed to load Pull Requests from GitHub API.");
+        setError(err instanceof Error ? err.message : "Failed to load Pull Requests from GitHub API.");
       } finally {
         setLoading(false);
       }
@@ -82,13 +84,50 @@ export default function RepoPage() {
       {/* Main Container */}
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-10">
         <div className="space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+            <div>
+              <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+                <Network className="w-8 h-8 text-indigo-500" />
+                Repository Intelligence
+              </h1>
+              <p className="text-gray-400 text-sm mt-1">
+                Analyze the full codebase or inspect pull requests for {owner}/{repoName}.
+              </p>
+            </div>
+            <Link
+              href={`/repository/${owner}/${repoName}/analysis`}
+              className="glow-btn inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-xl text-sm transition duration-200"
+            >
+              <BrainCircuit className="w-4 h-4" />
+              Analyze Repository
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="glass-card rounded-xl p-5 border border-white/5">
+              <BrainCircuit className="w-5 h-5 text-indigo-400 mb-3" />
+              <h2 className="text-sm font-bold text-white">Full Codebase Scan</h2>
+              <p className="text-xs text-gray-400 mt-1">Fetches repository files recursively and audits architecture, quality, scalability, security, and DevOps.</p>
+            </div>
+            <div className="glass-card rounded-xl p-5 border border-white/5">
+              <Network className="w-5 h-5 text-sky-400 mb-3" />
+              <h2 className="text-sm font-bold text-white">Dependency Graph</h2>
+              <p className="text-xs text-gray-400 mt-1">Maps imports, folder relationships, circular dependencies, and over-coupled modules.</p>
+            </div>
+            <div className="glass-card rounded-xl p-5 border border-white/5">
+              <GitPullRequest className="w-5 h-5 text-emerald-400 mb-3" />
+              <h2 className="text-sm font-bold text-white">PR Diagnostics</h2>
+              <p className="text-xs text-gray-400 mt-1">Keeps the existing pull request workflow for focused diff reviews.</p>
+            </div>
+          </div>
+
           <div>
-            <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-              <GitPullRequest className="w-8 h-8 text-indigo-500" />
+            <h2 className="text-xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+              <GitPullRequest className="w-6 h-6 text-indigo-500" />
               Pull Requests
-            </h1>
+            </h2>
             <p className="text-gray-400 text-sm mt-1">
-              Browse pull requests for {owner}/{repoName} and choose which branch diff to analyze.
+              Choose a branch diff to analyze when pull requests exist.
             </p>
           </div>
 
@@ -113,7 +152,7 @@ export default function RepoPage() {
               <GitPullRequest className="w-12 h-12 text-white/10 mx-auto mb-4" />
               <h3 className="text-lg font-bold text-white">No Pull Requests</h3>
               <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">
-                We couldn't find any open pull requests in this repository.
+                We couldn&apos;t find any open pull requests in this repository.
               </p>
             </div>
           ) : (

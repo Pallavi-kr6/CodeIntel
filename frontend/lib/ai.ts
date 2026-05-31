@@ -1,16 +1,21 @@
 import Groq from "groq-sdk";
 
-const groq = new Groq({
-  apiKey: process.env.NEXT_PUBLIC_GROQ_API_KEY || process.env.GROQ_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
-
 export async function reviewCode(patch: string): Promise<string | null> {
   if (!patch) {
     return "No changes detected in this Pull Request to review.";
   }
 
   try {
+    const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return "AI Review failed to run. Error: GROQ_API_KEY is not configured.";
+    }
+
+    const groq = new Groq({
+      apiKey,
+      dangerouslyAllowBrowser: true,
+    });
+
     const completion = await groq.chat.completions.create({
       messages: [
         {
@@ -35,8 +40,8 @@ Provide a structured, constructive, and highly professional review. Use Markdown
     });
 
     return completion.choices[0]?.message?.content || "No review content generated.";
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in reviewCode:", error);
-    return `AI Review failed to run. Error: ${error?.message || "Unknown error"}`;
+    return `AI Review failed to run. Error: ${error instanceof Error ? error.message : "Unknown error"}`;
   }
 }

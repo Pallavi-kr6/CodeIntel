@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { getGithubRepos, saveRepository } from "@/lib/github";
+import { getGithubRepos, saveRepository, type GithubRepository } from "@/lib/github";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { 
   GitBranch, 
   Search, 
@@ -18,8 +19,8 @@ import {
 } from "lucide-react";
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
-  const [repos, setRepos] = useState<any[]>([]);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [repos, setRepos] = useState<GithubRepository[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [connectingId, setConnectingId] = useState<number | null>(null);
@@ -61,15 +62,15 @@ export default function Home() {
     loadUserAndRepos();
   }, []);
 
-  async function handleConnect(repo: any) {
+  async function handleConnect(repo: GithubRepository) {
     if (!user) return;
     try {
       setConnectingId(repo.id);
       await saveRepository(user.id, repo);
       alert(`Successfully connected ${repo.name} to AI Code Reviewer!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      alert(`Failed to connect repository: ${err?.message || err}`);
+      alert(`Failed to connect repository: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setConnectingId(null);
     }

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { getPRFiles } from "@/lib/github";
 import { reviewCode } from "@/lib/ai";
@@ -51,7 +50,7 @@ export default function ReviewPage() {
           }
 
           let combinedPatch = "";
-          files.forEach((file: any) => {
+          files.forEach((file) => {
             if (file.patch) {
               combinedPatch += `\n\n--- File: ${file.filename} ---\n${file.patch}`;
             }
@@ -69,9 +68,9 @@ export default function ReviewPage() {
         } else {
           setError("GitHub authentication session not found. Please log in again.");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Error running AI review:", err);
-        setError(err?.message || "An error occurred while compiling code diffs and querying the AI model.");
+        setError(err instanceof Error ? err.message : "An error occurred while compiling code diffs and querying the AI model.");
       } finally {
         setLoading(false);
       }
